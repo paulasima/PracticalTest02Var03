@@ -5,6 +5,10 @@ import android.util.Log;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -47,8 +51,22 @@ public class CommunicationThread extends Thread{
                 HttpGet httpGet = new HttpGet("http://services.aonaware.com/DictService/DictService.asmx/Define?word=" + query);
                 ResponseHandler responseHandler = new BasicResponseHandler();
                 response = httpClient.execute(httpGet, responseHandler).toString();
+                //String html = "<?xml version=\"1.0\" encoding=\"UTF-8\"><tests><test><id>xxx</id><status>xxx</status></test><test><id>xxx</id><status>xxx</status></test></tests></xml>";
+                Document doc = Jsoup.parse(response, "", Parser.xmlParser());
+                int count = 0;
+                for (Element e : doc.select("WordDefinition")) {
+                    if (count == 1) {
+                        response = e.text();
+                        count ++;
+                        serverThread.setData(query, response);
+                        break;
+                    }
+                    else {
+                        count++;
+                    }
+                }
             }
-            
+
             writer.println(response);
 
             socket.close();
